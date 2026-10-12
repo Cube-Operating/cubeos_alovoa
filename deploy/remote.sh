@@ -98,7 +98,10 @@ systemctl restart cubeos-dating
 # --- 6. nginx: rate-limit zones + /dating/ locations -------------------------------------------
 log "nginx"
 SITE_REAL=$(readlink -f "$SITE")
-cp -p "$SITE_REAL" "$SITE_REAL.bak-$TS"
+# Backup OUTSIDE sites-enabled: nginx loads every file there, so a backup beside the site
+# would be served as a second copy (duplicate server/locations) and fail nginx -t.
+BACKUP=/root/nginx-$(basename "$SITE_REAL").bak-$TS
+cp -p "$SITE_REAL" "$BACKUP"
 install -m 644 "$B/nginx-dating-zones.conf" "$ZONES"
 install -d /etc/nginx/snippets
 install -m 644 "$B/nginx-dating-locations.conf" "$SNIPPET"
@@ -113,7 +116,7 @@ if ! grep -q "include $SNIPPET;" "$SITE_REAL"; then
 fi
 if ! nginx -t; then
     echo "nginx -t failed, restoring $SITE_REAL" >&2
-    cp -p "$SITE_REAL.bak-$TS" "$SITE_REAL"
+    cp -p "$BACKUP" "$SITE_REAL"
     rm -f "$ZONES" "$SNIPPET"
     nginx -t && systemctl reload nginx
     exit 1
