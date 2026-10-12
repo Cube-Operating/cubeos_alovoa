@@ -278,11 +278,16 @@ class CubeApiIntegrationTest {
                 .andExpect(jsonPath("$.profile.interests[0]").value("music"))
                 .andExpect(jsonPath("$.profile.photos.length()").value(1));
 
-        // again -> conflict; dob can't change; min age can't go below 18
+        // again -> conflict; dob can be corrected but never under 18; min age can't go below 18
         onboard(token, data("Young", LocalDate.now().minusYears(30), FEMALE, List.of(MALE))).andExpect(status().isConflict());
         mvc.perform(put(API + "/profile").header("Authorization", bearer(token)).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"dob\":\"1990-01-01\"}"))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.error").value("Your date of birth can't be changed."));
+                        .content("{\"dob\":\"" + LocalDate.now().minusYears(25) + "\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(get(API + "/me").header("Authorization", bearer(token)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.profile.age").value(25));
+        mvc.perform(put(API + "/profile").header("Authorization", bearer(token)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"dob\":\"" + LocalDate.now().minusYears(16) + "\"}"))
+                .andExpect(status().isBadRequest());
         mvc.perform(put(API + "/profile").header("Authorization", bearer(token)).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"minAge\":16}")).andExpect(status().isBadRequest());
     }

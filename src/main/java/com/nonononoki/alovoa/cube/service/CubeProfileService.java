@@ -136,6 +136,9 @@ public class CubeProfileService {
         Map<String, Object> profile = new LinkedHashMap<>();
         profile.put("name", user.getFirstName());
         profile.put("age", CubeViews.age(user));
+        // Own profile only (for editing): the birthday itself is never shown to other people.
+        profile.put("dob", user.getDates() == null || user.getDates().getDateOfBirth() == null ? null
+                : Tools.dateToLocalDate(user.getDates().getDateOfBirth()).toString());
         profile.put("gender", user.getGender() == null ? null : user.getGender().getId());
         profile.put("preferredGenders", user.getPreferedGenders() == null ? List.of()
                 : user.getPreferedGenders().stream().map(Gender::getId).sorted().toList());
@@ -292,9 +295,10 @@ public class CubeProfileService {
         }
         User user = access.currentOnboardedUser();
         if (in.getDob() != null) {
+            // Editable from Cube App's dating profile; validDob still enforces the minimum age.
             Date dob = validDob(in.getDob());
             if (!Tools.dateToLocalDate(dob).equals(Tools.dateToLocalDate(user.getDates().getDateOfBirth()))) {
-                throw CubeApiException.badRequest("Your date of birth can't be changed.");
+                user.getDates().setDateOfBirth(dob);
             }
         }
         if (in.getName() != null) {
