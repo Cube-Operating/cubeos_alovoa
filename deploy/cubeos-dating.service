@@ -1,0 +1,24 @@
+[Unit]
+Description=CubeOS dating backend for Cube App (Alovoa fork cubeos_alovoa)
+After=network-online.target mariadb.service
+Wants=network-online.target
+Requires=mariadb.service
+
+[Service]
+User=cubeos
+Group=cubeos
+WorkingDirectory=/var/lib/cubeos/dating
+EnvironmentFile=/etc/cubeos/dating.env
+ExecStart=/usr/bin/java -Xms256m -Xmx768m -XX:MaxMetaspaceSize=192m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Djava.io.tmpdir=/var/lib/cubeos/dating/tmp -jar /opt/cubeos/dating/alovoa.jar --spring.config.additional-location=file:/opt/cubeos/dating/dating.properties
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=180
+MemoryMax=1300M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
