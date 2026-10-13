@@ -27,9 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
- * CubeOS identity bridge. Validates a Cube App (Cubemail) bearer token exactly like the Cubeline
- * registrar does ({@code cubemail_account} in backend/cubeline-registrar/registrar.py): {@code GET
- * <cubemail>/wallet/me} with the bearer, account = first non-empty of handle / username / email
+ * CubeOS identity bridge. Validates a Cube App bearer token with the account service that issued it
+ * ({@code GET <cube.cubemail.url><cube.cubemail.me-path>} with the bearer — the Cubeline registrar's
+ * {@code /account/me} since Cube App accounts moved off Cubemail), account = first non-empty of handle / username / email
  * (local part, trimmed, lower-cased), falling back to the token's own handle/sub claim once Cubemail
  * has accepted it. Validated tokens are cached by SHA-256 hash for a few minutes.
  * <p>
@@ -47,6 +47,7 @@ public class CubeIdentityClient {
     private final Map<String, CachedHandle> cache = new ConcurrentHashMap<>();
     private final HttpClient http;
     private final String cubemailUrl;
+    private final String mePath;
     private final String registrarUrl;
     private final Duration timeout;
     private final Duration cacheTtl;
@@ -56,10 +57,12 @@ public class CubeIdentityClient {
     }
 
     public CubeIdentityClient(@Value("${cube.cubemail.url}") String cubemailUrl,
+                              @Value("${cube.cubemail.me-path:/wallet/me}") String mePath,
                               @Value("${cube.registrar.url}") String registrarUrl,
                               @Value("${cube.http.timeout-seconds:15}") int timeoutSeconds,
                               @Value("${cube.token-cache-seconds:300}") int cacheSeconds) {
         this.cubemailUrl = stripSlash(cubemailUrl);
+        this.mePath = mePath;
         this.registrarUrl = stripSlash(registrarUrl);
         this.timeout = Duration.ofSeconds(timeoutSeconds);
         this.cacheTtl = Duration.ofSeconds(cacheSeconds);
@@ -107,7 +110,7 @@ public class CubeIdentityClient {
     private Optional<String> fetchHandle(String token) {
         HttpResponse<String> r;
         try {
-            r = http.send(get(cubemailUrl + "/wallet/me", token), HttpResponse.BodyHandlers.ofString());
+            r = http.send(get(cubemailUrl + mePath, token), HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
             LOGGER.warn("Cubemail unreachable: {}", e.toString());
             throw new CubeApiException(HttpStatus.BAD_GATEWAY, "Cube App sign-in is unreachable. Please try again shortly.");

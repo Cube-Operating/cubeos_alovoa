@@ -35,7 +35,7 @@ class CubeIdentityClientTest {
     }
 
     private CubeIdentityClient client() {
-        return new CubeIdentityClient(fake.cubemailUrl(), fake.registrarUrl(), 5, 300);
+        return new CubeIdentityClient(fake.cubemailUrl(), "/wallet/me", fake.registrarUrl(), 5, 300);
     }
 
     @Test
@@ -84,7 +84,7 @@ class CubeIdentityClientTest {
     @Test
     void cacheExpires() {
         fake.meBody("tok1", "{\"handle\":\"alice\"}");
-        CubeIdentityClient c = new CubeIdentityClient(fake.cubemailUrl(), fake.registrarUrl(), 5, 0);
+        CubeIdentityClient c = new CubeIdentityClient(fake.cubemailUrl(), "/wallet/me", fake.registrarUrl(), 5, 0);
         c.handleForToken("tok1");
         c.handleForToken("tok1");
         assertEquals(2, fake.hits("/api/cubemail/wallet/me"));
@@ -92,7 +92,7 @@ class CubeIdentityClientTest {
 
     @Test
     void unreachableCubemailIsBadGateway() {
-        CubeIdentityClient c = new CubeIdentityClient("http://127.0.0.1:1/api/cubemail", fake.registrarUrl(), 2, 300);
+        CubeIdentityClient c = new CubeIdentityClient("http://127.0.0.1:1/api/cubemail", "/wallet/me", fake.registrarUrl(), 2, 300);
         CubeApiException e = assertThrows(CubeApiException.class, () -> c.handleForToken("tok1"));
         assertEquals(HttpStatus.BAD_GATEWAY, e.getStatus());
     }
@@ -108,7 +108,7 @@ class CubeIdentityClientTest {
         fake.cubeline("alice", "12345"); // malformed numbers are ignored
         assertEquals(Optional.empty(), client().cubelineForToken("tok1"));
         assertEquals(Optional.empty(), client().cubelineForToken("unknown-token"));
-        CubeIdentityClient down = new CubeIdentityClient(fake.cubemailUrl(), "http://127.0.0.1:1/cubeline", 2, 300);
+        CubeIdentityClient down = new CubeIdentityClient(fake.cubemailUrl(), "/wallet/me", "http://127.0.0.1:1/cubeline", 2, 300);
         assertEquals(Optional.empty(), down.cubelineForToken("tok1"));
     }
 }

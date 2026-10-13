@@ -83,6 +83,7 @@ class CubeApiIntegrationTest {
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry r) {
         r.add("cube.cubemail.url", () -> fake.cubemailUrl());
+        r.add("cube.cubemail.me-path", () -> "/wallet/me");
         r.add("cube.registrar.url", () -> fake.registrarUrl());
     }
 
