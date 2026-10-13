@@ -147,7 +147,7 @@ check() { # name expected-code url [curl args...]
 }
 check "direct, no bearer"          401 "http://127.0.0.1:$PORT/api/v1/cube/me"
 check "nginx, no bearer"           401 "http://127.0.0.1/dating/api/v1/cube/me"
-check "nginx, invalid bearer -> Cubemail rejects" 401 "http://127.0.0.1/dating/api/v1/cube/options" -H "Authorization: Bearer cubeos-smoke-invalid"
+check "nginx, invalid bearer -> registrar rejects" 401 "http://127.0.0.1/dating/api/v1/cube/options" -H "Authorization: Bearer cubeos-smoke-invalid"
 check "nginx, web UI not published" 404 "http://127.0.0.1/dating/"
 check "not listening publicly"     000 "http://$(hostname -I | awk '{print $1}'):$PORT/" --connect-timeout 3
 check "cubeline registrar still up" 401 "http://127.0.0.1/cubeline/me"
